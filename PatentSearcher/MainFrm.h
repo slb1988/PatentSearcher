@@ -199,9 +199,9 @@ protected:
 
 public:
  
-	void Parse_Invent_Design_PatentDetails(string pgcontent,string save_as_path,CString application_number);//解析专利细节
+	void Parse_Invent_Design_PatentDetails(string pgcontent ,string save_as_path,CString application_number,int item_index);//解析专利细节
 
-	void Parse_Appearance_PatentDetails(string pgcontent,string save_as_path,CString application_number);//解析专利细节
+	void Parse_Appearance_PatentDetails(string pgcontent,string save_as_path,CString application_number,int item_index);//解析专利细节
 
 	// 下载专利说明
 	void Patent_Specification_Download(string patent_num,string specification_url, string pgtotal,string save_as_path,int item_index);

@@ -1084,7 +1084,6 @@ bool CMainFrame::ThreadProc2()
 			m_DownloadListView.SetItemText(download_list_count,1,cstr_Number);//专利号
 			m_DownloadListView.SetItemText(download_list_count,2,cstr_Name);// 专利名称
 			m_DownloadListView.SetItemText(download_list_count,3,L"已下载0页"); // 下载进度
-
 			while (!download(cstr_URL,htmlPath_ch))
 			{
 				Sleep(150);
@@ -1092,12 +1091,12 @@ bool CMainFrame::ThreadProc2()
 
 			if (-1 != cstr_URL.Find(L"leixin=wgzl"))//如果是外观专利
 			{
-				Parse_Appearance_PatentDetails(ReadHtmlPage((string)htmlPath_ch), (string)tiffPath_ch, cstr_Number,download_list_count);
+				Parse_Appearance_PatentDetails(ReadHtmlPage((string)htmlPath_ch), (string)tiffPath_ch, cstr_Number);
 
 			}
 			else // 发明专利或实用新型专利
 			{
-				Parse_Invent_Design_PatentDetails(ReadHtmlPage((string)htmlPath_ch), (string)tiffPath_ch, cstr_Number,download_list_count);
+				Parse_Invent_Design_PatentDetails(ReadHtmlPage((string)htmlPath_ch), (string)tiffPath_ch, cstr_Number);
 
 				CString pdfFolderPath = currentPath + "DownLoads\\" + cstr_Number ;
 				CreateDirectory(pdfFolderPath, NULL);
@@ -1137,7 +1136,7 @@ LRESULT CMainFrame::OnSearchLoadselect(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
 	return 0;
 }
 
-void CMainFrame::Parse_Invent_Design_PatentDetails(string pgcontent ,string save_as_path,CString application_number,int item_index)
+void CMainFrame::Parse_Invent_Design_PatentDetails(string pgcontent ,string save_as_path,CString application_number)
 {
 	string patent_app_num;             //申请（专利）号
 	string patent_app_name;            //名  称
@@ -1163,8 +1162,6 @@ void CMainFrame::Parse_Invent_Design_PatentDetails(string pgcontent ,string save
 	string patent_specification_url;  // 专利说明
 
 	string patent_specification_total_page;  // 专利说明总页数
-
-
 
 
 	/****************************************************************************************/
@@ -1711,15 +1708,18 @@ void CMainFrame::Parse_Invent_Design_PatentDetails(string pgcontent ,string save
 	lvitem.iSubItem=8;   
 	lvitem.pszText   =pwStr_app_person;                  // 申请人
 	m_DownloadListView.SetItem(&lvitem); 
-	*/
-
-	// 提示开始下载
-
-	m_DownloadListView.SetItemText(item_index,4,(CString) patent_specification_url.c_str());// 下载来源
-	m_DownloadListView.SetItemText(item_index,5,(CString) patent_specification_total_page.c_str());// 下载页数
-	m_DownloadListView.SetItemText(item_index,6,(CString) patent_apply_date.c_str()); // 申请日
-	m_DownloadListView.SetItemText(item_index,7,(CString) patent_invent_person.c_str()); // 发明人
-	m_DownloadListView.SetItemText(item_index,8,(CString) patent_app_person.c_str()); // 申请人
+*/
+    int download_list_count = m_DownloadListView.GetItemCount();
+	m_DownloadListView.InsertItem(download_list_count,(LPCTSTR)"");
+	m_DownloadListView.SetItemText(download_list_count,0,L"正在下载");
+	m_DownloadListView.SetItemText(download_list_count,1,application_number);//专利号
+	m_DownloadListView.SetItemText(download_list_count,2,(CString)patent_app_name.c_str());// 专利名称
+	m_DownloadListView.SetItemText(download_list_count,3,L"已下载0页"); // 下载进度
+	m_DownloadListView.SetItemText(download_list_count,4,(CString) patent_specification_url.c_str());// 下载来源
+	m_DownloadListView.SetItemText(download_list_count,5,(CString) patent_specification_total_page.c_str());// 下载页数
+	m_DownloadListView.SetItemText(download_list_count,6,(CString) patent_apply_date.c_str()); // 申请日
+	m_DownloadListView.SetItemText(download_list_count,7,(CString) patent_invent_person.c_str()); // 发明人
+    m_DownloadListView.SetItemText(download_list_count,8,(CString) patent_app_person.c_str()); // 申请人
 
 	char CN_temp_app_num[20];
 	memset(CN_temp_app_num,0,20);
@@ -1727,26 +1727,26 @@ void CMainFrame::Parse_Invent_Design_PatentDetails(string pgcontent ,string save
 	strcpy(CN_temp_app_num,W2A(application_number.LockBuffer()));
 	application_number.UnlockBuffer();
 
-	Patent_Specification_Download((string)CN_temp_app_num,patent_specification_url,patent_specification_total_page,save_as_path,item_index);
+	Patent_Specification_Download((string)CN_temp_app_num,patent_specification_url,patent_specification_total_page,save_as_path,download_list_count);
 	/****************************************************************************************/
 }
 
 void CMainFrame::Patent_Specification_Download(string patent_num,string specification_url, string pgtotal,string save_as_path,int item_index)
 {
 	//lvitem->iItem       = i ;
-
-
-
-	// 
-	// 	lvitem->iSubItem=1;   
-	// 	lvitem->pszText   = L"xxxxxxxxxxxxxxxx";     //LPWSTR 下载状态
-	// 	lvitem->lParam     = 0; 
-	// 	m_DownloadListView.SetItem(&(*lvitem));
+	 
+	
+	
+// 
+// 	lvitem->iSubItem=1;   
+// 	lvitem->pszText   = L"xxxxxxxxxxxxxxxx";     //LPWSTR 下载状态
+// 	lvitem->lParam     = 0; 
+// 	m_DownloadListView.SetItem(&(*lvitem));
 
 	int pg_total = atoi(pgtotal.c_str());
 
 	string str_url = "000001.tif";
-	string file_ext = "%6.6d.tif";
+    string file_ext = "%6.6d.tif";
 	int k = specification_url.find(str_url);
 
 	if (-1 == k)
@@ -1802,14 +1802,14 @@ void CMainFrame::Patent_Specification_Download(string patent_num,string specific
 		USES_CONVERSION;
 		CString cstr_patent_pgnum; // 下载页数
 		cstr_patent_pgnum.Format(L"已下载%d页",i);
-		/*
+/*
 		LPWSTR pwStr_pgnum=cstr_patent_pgnum.GetBuffer(cstr_patent_pgnum.GetLength());
 		cstr_patent_pgnum.ReleaseBuffer();
 
 		lvitem->iSubItem=3;   
 		lvitem->pszText   =pwStr_pgnum;                    // 下载页数
 		m_DownloadListView.SetItem(&(*lvitem)); 
-		*/
+*/
 		m_DownloadListView.SetItemText(item_index,3,cstr_patent_pgnum);
 
 		downloaded_pages = i; // 把下载页数复制，用于下面是否去合并
@@ -1818,9 +1818,9 @@ void CMainFrame::Patent_Specification_Download(string patent_num,string specific
 
 	if (Is_Stop_Current_Download((CString) patent_num.c_str()))
 	{
-		// 		lvitem->iSubItem=0;   
-		// 		lvitem->pszText   =L"已停止";                  
-		// 		m_DownloadListView.SetItem(&(*lvitem)); 
+// 		lvitem->iSubItem=0;   
+// 		lvitem->pszText   =L"已停止";                  
+// 		m_DownloadListView.SetItem(&(*lvitem)); 
 
 		m_DownloadListView.SetItemText(item_index,0,L"已停止");  // 下载状态
 
@@ -1834,9 +1834,9 @@ void CMainFrame::Patent_Specification_Download(string patent_num,string specific
 	}
 	else
 	{
-		// 		lvitem->iSubItem=0;   
-		// 		lvitem->pszText   =L"已完成";                    // 下载状态
-		// 		m_DownloadListView.SetItem(&(*lvitem)); 
+// 		lvitem->iSubItem=0;   
+// 		lvitem->pszText   =L"已完成";                    // 下载状态
+// 		m_DownloadListView.SetItem(&(*lvitem)); 
 		m_DownloadListView.SetItemText(item_index,0,L"已完成");  // 下载状态
 
 		//写数据库，更改finishdownload字段
@@ -2163,30 +2163,6 @@ LRESULT CMainFrame::OnStartDownloadSelect(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 LRESULT CMainFrame::OnStopDownload(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	stop_download_flag = 1;
-
-	CString cstr_Number;
-	CString cstr_URL;
-	CString cstr_Name;
-
-	int i,iState;
-	int nItemSelected=m_DownloadListView.GetSelectedCount();//所选表项数
-	int nItemCount=m_DownloadListView.GetItemCount();//表项总数
-	if(nItemSelected<1) return 0;
-	for(i=nItemCount-1;i>=0;i--)
-	{
-		iState=m_DownloadListView.GetItemState(i,LVIS_SELECTED);
-		if(iState!=0)
-		{
-			m_DownloadListView.GetItemText(i, 1, cstr_Number);
-			m_DownloadListView.GetItemText(i, 2, cstr_Name);
-			//if ((cstr_Number == cstr_patent_number) && stop_download_flag)// 是否和当前选中停止的一样
-			//{
-			m_DownloadListView.SetItemText(i, 0, L"停止中");
-			//	return 1;
-			//}
-		}
-	}
-
 	return 0;
 }
 
@@ -2204,7 +2180,7 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 	CString cstr_Name;
 	CString cstr_URL;
 	CString cstr_Total_Page;
-
+ 
 
 	int i,iState;
 	int nItemSelected=m_DownloadListView.GetSelectedCount();//所选表项数
@@ -2216,7 +2192,7 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 		if(iState!=0)
 		{
 			m_DownloadListView.GetItemText(i, 1, cstr_Number);
-
+			
 			m_DownloadListView.GetItemText(i, 2, cstr_Name);
 
 			m_DownloadListView.GetItemText(i, 4, cstr_URL);
@@ -2226,7 +2202,7 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 
 			CString tiffFolderPath;			//下载的TIFF文件夹 路径
 			tiffFolderPath = currentPath + "TempFolder\\" + cstr_Number;
-			/*
+/*
 			CreateDirectory(tiffFolderPath, NULL);
 
 			CString htmlPath;			//说明HTML的文档路径
@@ -2248,13 +2224,13 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 
 			while (!download(cstr_URL,htmlPath_ch))
 			{
-			Sleep(150);
+				Sleep(150);
 			}
-			*/
-			//		ParsePatentDetails(ReadHtmlPage((string)htmlPath_ch), (string)tiffPath_ch, cstr_Number);
+*/
+	//		ParsePatentDetails(ReadHtmlPage((string)htmlPath_ch), (string)tiffPath_ch, cstr_Number);
 
 
-			/*	
+	/*	
 			int iPos=m_DownloadListView.InsertItem(&lvitem);//返回表项插入后的索引号   
 
 			lvitem.mask         =LVIF_TEXT;   
@@ -2290,7 +2266,7 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 			lvitem.iSubItem=8;   
 			lvitem.pszText   =pwStr_app_person;                  // 申请人
 			m_DownloadListView.SetItem(&lvitem); 
-			*/
+*/
 			char CN_temp_app_num[20];
 			memset(CN_temp_app_num,0,20);
 
@@ -2312,7 +2288,7 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 			memset(tiffPath_ch,0,200);
 			strcpy(tiffPath_ch,W2A(tiffFolderPath.LockBuffer()));
 			tiffFolderPath.UnlockBuffer();
-			/*
+/*
 			LVITEM lvitem;
 			lvitem.mask        = LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;   
 			lvitem.iItem       = i ;   
@@ -2320,7 +2296,7 @@ bool CMainFrame::ThreadProc5() // 开始下载未下载完成的
 			lvitem.pszText   = L"正在下载";     //LPWSTR 下载状态
 			lvitem.lParam     = 0; 
 			m_DownloadListView.SetItem(&lvitem);
-			*/
+*/
 			m_DownloadListView.SetItemText(i,0,L"正在下载");
 
 			//m_DownloadListView.GetItem(&lvitem);
@@ -2357,7 +2333,6 @@ bool CMainFrame::Is_Stop_Current_Download(CString cstr_patent_number)
 			m_DownloadListView.GetItemText(i, 2, cstr_Name);
 			if ((cstr_Number == cstr_patent_number) && stop_download_flag)// 是否和当前选中停止的一样
 			{
-				//m_DownloadListView.SetItemText(i, 0, L"停止中");
 				return 1;
 			}
 		}
@@ -2365,399 +2340,398 @@ bool CMainFrame::Is_Stop_Current_Download(CString cstr_patent_number)
 	return 0;
 }
 
-void CMainFrame::Parse_Appearance_PatentDetails(string pgcontent,string save_as_path,CString application_number,int item_index)
+void CMainFrame::Parse_Appearance_PatentDetails(string pgcontent,string save_as_path,CString application_number)
 {
-	string patent_app_num;             //申请（专利）号
-	string patent_app_name;            //名  称
-	string patent_app_abstract;        //摘要
-	string patent_apply_date;          //申请日
-	string patent_public_date;         //公开（公告）日
-	string patent_public_num;          //公开（公告）号
-	string patent_classify_num;        //分类号
-	string patent_major_classify_num;  //主分类号
-	string patent_app_person;          //申请(专利权)人
-	string patent_invent_person;        //发明（设计）人
-	string patent_address;              //地址
-	string patent_international_public; //国际公布
-	string patent_certification_date;   //颁证日
-	string patent_agent;                //专利代理机构
-	string patent_attorney;             //代理人
-	string patent_priority;             //优先权
-
-	string patent_fen_orgin_num;                  //分案原申请号
-	string patent_international_apply; //国际申请
-	string patent_into_coutry; //国际申请
-
-	string patent_specification_url;  // 专利说明
-
-	string patent_specification_total_page;  // 专利说明总页数
-
-
-	/****************************************************************************************/
-	int i;
-	int j;
-	string str1 = "【申请号】&nbsp;";
-	string str2 = "</";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_app_num = pgcontent.substr(0,j); //申请号解析出来了
-
-
-	cout<<"【申请号】"<<patent_app_num<<endl;
-	/****************************************************************************************/
-
-	str1 = "【申请日】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_apply_date = pgcontent.substr(0,j);  //申请日 解析出来了
-
-
-	cout<<"【申请日】"<<patent_apply_date<<endl;
-	/****************************************************************************************/
-
-	str1 = "【名称】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_app_name = pgcontent.substr(0,j);   //名称 解析出来了
-
-	cout<<"【名称】"<<patent_app_name<<endl;  
-
-	/****************************************************************************************/
-
-	str1 = "【公开（公告）号】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_public_num = pgcontent.substr(0,j);  //公开（公告）号 解析出来了
-
-	cout<<"【公开（公告）号】"<<patent_public_num<<endl;
-	/****************************************************************************************/
-
-	str1 = "【公开（公告）日】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_public_date = pgcontent.substr(0,j);  //公开（公告）日 解析出来了
-
-	cout<<"【公开（公告）日】"<<patent_public_date<<endl;
-	/****************************************************************************************/
-
-	str1 = "【主分类号】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_major_classify_num = pgcontent.substr(0,j); //主分类号 解析出来了
-
-	cout<<"【主分类号】"<<patent_major_classify_num<<endl;
-	/****************************************************************************************/
-
-	str1 = "【分案原申请号】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_fen_orgin_num = pgcontent.substr(0,j); //分案原申请号 解析出来了
-
-	cout<<"【分案原申请号】"<<patent_fen_orgin_num<<endl;
-	/****************************************************************************************/
-
-	str1 = "【分类号】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_classify_num = pgcontent.substr(0,j);  //分类号 解析出来了
-
-	cout<<"【分类号】"<<patent_classify_num<<endl;
-	/****************************************************************************************/
-
-	str1 = "【颁证日】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_certification_date = pgcontent.substr(0,j); //颁证日 解析出来了
-
-	cout<<"【颁证日】"<<patent_certification_date<<endl;
-	/****************************************************************************************/
-
-	str1 = "【优先权】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_priority = pgcontent.substr(0,j); //优先权 解析出来了
-
-	cout<<"【优先权】"<<patent_priority<<endl;
-	/****************************************************************************************/
-
-	str1 = "【申请（专利权）人】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_app_person = pgcontent.substr(0,j); //申请（专利权）人 解析出来了
-
-	cout<<"【申请（专利权）人】"<<patent_app_person<<endl;
-	/****************************************************************************************/
-
-	str1 = "【地址】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_address = pgcontent.substr(0,j);  //地址 解析出来了
-
-	cout<<"【地址】"<<patent_address<<endl;
-	/****************************************************************************************/
-
-	str1 = "【国际申请】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_international_apply = pgcontent.substr(0,j);   //国际申请 解析出来了
-
-	cout<<"【国际申请】"<<patent_international_apply<<endl;
-	/****************************************************************************************/
-
-	str1 = "【国际公布】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_international_public = pgcontent.substr(0,j);   //国际公布 解析出来了
-
-	cout<<"【国际公布】"<<patent_international_public<<endl;
-	/****************************************************************************************/
-
-	str1 = "【进入国家日期】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_into_coutry = pgcontent.substr(0,j);  //进入国家日期 解析出来了
-
-	cout<<"【进入国家日期】"<<patent_into_coutry<<endl;
-	/****************************************************************************************/
-
-	str1 = "【专利代理机构】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_agent = pgcontent.substr(0,j); //专利代理机构 解析出来了
-
-	cout<<"【专利代理机构】"<<patent_agent<<endl;
-	/****************************************************************************************/
-
-	str1 = "【代理人】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_attorney = pgcontent.substr(0,j); //代理人 解析出来了
-
-	cout<<"【代理人】"<<patent_attorney<<endl;
-	/****************************************************************************************/
-
-	str1 = "【摘要】&nbsp;";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_app_abstract = pgcontent.substr(0,j); //摘要 解析出来了
-
-	cout<<"【摘要】"<<patent_app_abstract<<endl;
-
-	/****************************************************************************************/
-
-	str1 = "jpgsubmit('";
-
-	str2 = "'";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_specification_url = pgcontent.substr(0,j)+".jpg"; //图片地址 解析出来了
-
-	cout<<"【图片地址】"<<patent_specification_url<<endl;
-
-	/****************************************************************************************/
-
-	str1 = ">共";
-
-	str2 = "张";
-
-	i = pgcontent.find(str1);
-
-	pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
-
-	j = pgcontent.find(str2);
-
-	patent_specification_total_page = pgcontent.substr(0,j); //图片页数 解析出来了
-
-	cout<<"【图片页数】"<<patent_specification_total_page<<endl;
-
-	int total_pges = atoi(patent_specification_total_page.c_str());
-
-	cout<<"整型页数："<<total_pges<<endl;
-
-
-	/************************************************************************/
-	/* 以下是数据库存储                                                     */
-	/************************************************************************/
-
-	string save_as_dir ;
-	int isave = save_as_path.find_last_of("\\");
-	save_as_dir = save_as_path.substr(isave+1,save_as_path.length()-isave-1); // 获取存储目录
-
-	SYSTEMTIME st;
-	CString str_system_time;
-	GetLocalTime(&st);
-	str_system_time.Format(L"%4d-%2d-%2d %2d:%2d:%2d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
-
-
-	CString sqlsentence;
-	sqlsentence = L"insert into sipo_data( \
-				   application_number,\
-				   application_date,\
-				   title,\
-				   publication_number,\
-				   publication_date,\
-				   main_classification,\
-				   divisional_application_original_number,\
-				   classification,\
-				   grant_date,\
-				   priority,\
-				   applicant,\
-				   address,\
-				   inventor,\
-				   international_application,\
-				   international_publication,\
-				   enter_into_national_phase_date,\
-				   agent,\
-				   attorney,\
-				   abstracts,\
-				   update_time,\
-				   pagemax ,\
-				   web_url, \
-				   save_dir) \
-				   values('"
-				   +application_number+L"','"
-				   +(CString)patent_apply_date.c_str()+L"','"
-				   +(CString)patent_app_name.c_str()+L"','"
-				   +(CString)patent_public_num.c_str()+L"','"
-				   +(CString)patent_public_date.c_str()+L"','"
-				   +(CString)patent_major_classify_num.c_str()+L"','"
-				   +(CString)patent_fen_orgin_num.c_str()+L"','"
-				   +(CString)patent_classify_num.c_str()+L"','"
-				   +(CString)patent_certification_date.c_str()+L"','"
-				   +(CString)patent_priority.c_str()+L"','"
-				   +(CString)patent_app_person.c_str()+L"','"
-				   +(CString)patent_address.c_str()+L"','"
-				   +(CString)patent_invent_person.c_str()+L"','"
-				   +(CString)patent_international_apply.c_str()+L"','"
-				   +(CString)patent_international_public.c_str()+L"','"
-				   +(CString)patent_into_coutry.c_str()+L"','"
-				   +(CString)patent_agent.c_str()+L"','"
-				   +(CString)patent_attorney.c_str()+L"','"
-				   +(CString)patent_app_abstract.c_str()+L"','"
-				   +str_system_time +L"','"
-				   +(CString)patent_specification_total_page.c_str()+L"','"
-				   +(CString)patent_specification_url.c_str()+L"','"
-				   +(CString)save_as_dir.c_str()+L"')";
-
-	if (!m_runsql.RunSQL(sqlsentence))
-	{
-		MessageBox(L"error insert",L"INSERT",0);
-	}
-
-	/*
-	int download_list_count = m_DownloadListView.GetItemCount();
-	m_DownloadListView.SetItemText(download_list_count,0,L"正在下载");
-	m_DownloadListView.SetItemText(download_list_count,1,application_number);//专利号
-	m_DownloadListView.SetItemText(download_list_count,2,(CString)patent_app_name.c_str());// 专利名称
-	m_DownloadListView.SetItemText(download_list_count,3,L"已下载0页"); // 下载进度
-	*/
-	m_DownloadListView.SetItemText(item_index,4,(CString) patent_specification_url.c_str());// 下载来源
-	m_DownloadListView.SetItemText(item_index,5,(CString) patent_specification_total_page.c_str());// 下载页数
-	m_DownloadListView.SetItemText(item_index,6,(CString) patent_apply_date.c_str()); // 申请日
-	m_DownloadListView.SetItemText(item_index,7,(CString) patent_invent_person.c_str()); // 发明人
-	m_DownloadListView.SetItemText(item_index,8,(CString) patent_app_person.c_str()); // 申请人
-
-	char CN_temp_app_num[20];
-	memset(CN_temp_app_num,0,20);
-	USES_CONVERSION;
-	strcpy(CN_temp_app_num,W2A(application_number.LockBuffer()));
-	application_number.UnlockBuffer();
-
-	Patent_Specification_Download((string)CN_temp_app_num,patent_specification_url,patent_specification_total_page,save_as_path,item_index);
-	/****************************************************************************************/
+	 string patent_app_num;             //申请（专利）号
+	 string patent_app_name;            //名  称
+	 string patent_app_abstract;        //摘要
+	 string patent_apply_date;          //申请日
+	 string patent_public_date;         //公开（公告）日
+	 string patent_public_num;          //公开（公告）号
+	 string patent_classify_num;        //分类号
+	 string patent_major_classify_num;  //主分类号
+	 string patent_app_person;          //申请(专利权)人
+	 string patent_invent_person;        //发明（设计）人
+	 string patent_address;              //地址
+	 string patent_international_public; //国际公布
+	 string patent_certification_date;   //颁证日
+	 string patent_agent;                //专利代理机构
+	 string patent_attorney;             //代理人
+     string patent_priority;             //优先权
+
+	 string patent_fen_orgin_num;                  //分案原申请号
+	 string patent_international_apply; //国际申请
+	 string patent_into_coutry; //国际申请
+	 
+	 string patent_specification_url;  // 专利说明
+
+	 string patent_specification_total_page;  // 专利说明总页数
+
+
+	 /****************************************************************************************/
+	 int i;
+	 int j;
+	 string str1 = "【申请号】&nbsp;";
+	 string str2 = "</";
+	 
+	 i = pgcontent.find(str1);
+
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+
+	 patent_app_num = pgcontent.substr(0,j); //申请号解析出来了
+
+	  
+	 cout<<"【申请号】"<<patent_app_num<<endl;
+	 /****************************************************************************************/
+
+	 str1 = "【申请日】&nbsp;";
+
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_apply_date = pgcontent.substr(0,j);  //申请日 解析出来了
+
+      
+	 cout<<"【申请日】"<<patent_apply_date<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【名称】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_app_name = pgcontent.substr(0,j);   //名称 解析出来了
+	  
+	 cout<<"【名称】"<<patent_app_name<<endl;  
+
+	 /****************************************************************************************/
+	 
+	 str1 = "【公开（公告）号】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_public_num = pgcontent.substr(0,j);  //公开（公告）号 解析出来了
+	 
+	 cout<<"【公开（公告）号】"<<patent_public_num<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【公开（公告）日】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_public_date = pgcontent.substr(0,j);  //公开（公告）日 解析出来了
+	 
+	 cout<<"【公开（公告）日】"<<patent_public_date<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【主分类号】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_major_classify_num = pgcontent.substr(0,j); //主分类号 解析出来了
+	 
+	 cout<<"【主分类号】"<<patent_major_classify_num<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【分案原申请号】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_fen_orgin_num = pgcontent.substr(0,j); //分案原申请号 解析出来了
+	 
+	 cout<<"【分案原申请号】"<<patent_fen_orgin_num<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【分类号】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_classify_num = pgcontent.substr(0,j);  //分类号 解析出来了
+	 
+	 cout<<"【分类号】"<<patent_classify_num<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【颁证日】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_certification_date = pgcontent.substr(0,j); //颁证日 解析出来了
+	 
+	 cout<<"【颁证日】"<<patent_certification_date<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【优先权】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_priority = pgcontent.substr(0,j); //优先权 解析出来了
+	 
+	 cout<<"【优先权】"<<patent_priority<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【申请（专利权）人】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_app_person = pgcontent.substr(0,j); //申请（专利权）人 解析出来了
+	 
+	 cout<<"【申请（专利权）人】"<<patent_app_person<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【地址】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_address = pgcontent.substr(0,j);  //地址 解析出来了
+	 
+	 cout<<"【地址】"<<patent_address<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【国际申请】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_international_apply = pgcontent.substr(0,j);   //国际申请 解析出来了
+	 
+	 cout<<"【国际申请】"<<patent_international_apply<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【国际公布】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_international_public = pgcontent.substr(0,j);   //国际公布 解析出来了
+	 
+	 cout<<"【国际公布】"<<patent_international_public<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【进入国家日期】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_into_coutry = pgcontent.substr(0,j);  //进入国家日期 解析出来了
+	 
+	 cout<<"【进入国家日期】"<<patent_into_coutry<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【专利代理机构】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_agent = pgcontent.substr(0,j); //专利代理机构 解析出来了
+	 
+	 cout<<"【专利代理机构】"<<patent_agent<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【代理人】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_attorney = pgcontent.substr(0,j); //代理人 解析出来了
+	 
+	 cout<<"【代理人】"<<patent_attorney<<endl;
+	 /****************************************************************************************/
+	 
+	 str1 = "【摘要】&nbsp;";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_app_abstract = pgcontent.substr(0,j); //摘要 解析出来了
+	 
+	 cout<<"【摘要】"<<patent_app_abstract<<endl;
+
+	 /****************************************************************************************/
+	 
+	 str1 = "jpgsubmit('";
+
+	 str2 = "'";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_specification_url = pgcontent.substr(0,j)+".jpg"; //图片地址 解析出来了
+	 
+	 cout<<"【图片地址】"<<patent_specification_url<<endl;
+
+	 /****************************************************************************************/
+	 
+	 str1 = ">共";
+	 
+	 str2 = "张";
+	 
+	 i = pgcontent.find(str1);
+	 
+	 pgcontent = pgcontent.substr(i+str1.length(),pgcontent.length()-i-str1.length());
+     
+	 j = pgcontent.find(str2);
+	 
+	 patent_specification_total_page = pgcontent.substr(0,j); //图片页数 解析出来了
+	 
+	 cout<<"【图片页数】"<<patent_specification_total_page<<endl;
+
+	 int total_pges = atoi(patent_specification_total_page.c_str());
+
+	 cout<<"整型页数："<<total_pges<<endl;
+
+
+	 /************************************************************************/
+	 /* 以下是数据库存储                                                     */
+	 /************************************************************************/
+
+	 string save_as_dir ;
+	 int isave = save_as_path.find_last_of("\\");
+	 save_as_dir = save_as_path.substr(isave+1,save_as_path.length()-isave-1); // 获取存储目录
+
+	 SYSTEMTIME st;
+	 CString str_system_time;
+	 GetLocalTime(&st);
+	 str_system_time.Format(L"%4d-%2d-%2d %2d:%2d:%2d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond);
+
+
+	 CString sqlsentence;
+	 sqlsentence = L"insert into sipo_data( \
+					application_number,\
+					application_date,\
+					title,\
+					publication_number,\
+					publication_date,\
+					main_classification,\
+					divisional_application_original_number,\
+					classification,\
+					grant_date,\
+					priority,\
+					applicant,\
+					address,\
+					inventor,\
+					international_application,\
+					international_publication,\
+					enter_into_national_phase_date,\
+					agent,\
+					attorney,\
+					abstracts,\
+					update_time,\
+					pagemax ,\
+					web_url, \
+					save_dir) \
+					values('"
+					+application_number+L"','"
+					+(CString)patent_apply_date.c_str()+L"','"
+					+(CString)patent_app_name.c_str()+L"','"
+					+(CString)patent_public_num.c_str()+L"','"
+					+(CString)patent_public_date.c_str()+L"','"
+					+(CString)patent_major_classify_num.c_str()+L"','"
+					+(CString)patent_fen_orgin_num.c_str()+L"','"
+					+(CString)patent_classify_num.c_str()+L"','"
+					+(CString)patent_certification_date.c_str()+L"','"
+					+(CString)patent_priority.c_str()+L"','"
+					+(CString)patent_app_person.c_str()+L"','"
+					+(CString)patent_address.c_str()+L"','"
+					+(CString)patent_invent_person.c_str()+L"','"
+					+(CString)patent_international_apply.c_str()+L"','"
+					+(CString)patent_international_public.c_str()+L"','"
+					+(CString)patent_into_coutry.c_str()+L"','"
+					+(CString)patent_agent.c_str()+L"','"
+					+(CString)patent_attorney.c_str()+L"','"
+					+(CString)patent_app_abstract.c_str()+L"','"
+					+str_system_time +L"','"
+					+(CString)patent_specification_total_page.c_str()+L"','"
+					+(CString)patent_specification_url.c_str()+L"','"
+					+(CString)save_as_dir.c_str()+L"')";
+
+	 if (!m_runsql.RunSQL(sqlsentence))
+	 {
+		 MessageBox(L"error insert",L"INSERT",0);
+	 }
+
+
+	 int download_list_count = m_DownloadListView.GetItemCount();
+	 m_DownloadListView.SetItemText(download_list_count,0,L"正在下载");
+	 m_DownloadListView.SetItemText(download_list_count,1,application_number);//专利号
+	 m_DownloadListView.SetItemText(download_list_count,2,(CString)patent_app_name.c_str());// 专利名称
+	 m_DownloadListView.SetItemText(download_list_count,3,L"已下载0页"); // 下载进度
+	 m_DownloadListView.SetItemText(download_list_count,4,(CString) patent_specification_url.c_str());// 下载来源
+	 m_DownloadListView.SetItemText(download_list_count,5,(CString) patent_specification_total_page.c_str());// 下载页数
+	 m_DownloadListView.SetItemText(download_list_count,6,(CString) patent_apply_date.c_str()); // 申请日
+	 m_DownloadListView.SetItemText(download_list_count,7,(CString) patent_invent_person.c_str()); // 发明人
+	 m_DownloadListView.SetItemText(download_list_count,8,(CString) patent_app_person.c_str()); // 申请人
+
+	 char CN_temp_app_num[20];
+	 memset(CN_temp_app_num,0,20);
+	 USES_CONVERSION;
+	 strcpy(CN_temp_app_num,W2A(application_number.LockBuffer()));
+	 application_number.UnlockBuffer();
+
+	 Patent_Specification_Download((string)CN_temp_app_num,patent_specification_url,patent_specification_total_page,save_as_path,download_list_count);
+	 /****************************************************************************************/
 }
